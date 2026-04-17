@@ -81,6 +81,9 @@ A comprehensive Model Context Protocol (MCP) server that provides AI assistants 
 - `get_available_performance_metrics` - **NEW!** List all available metrics
 - `get_available_date_ranges` - **NEW!** List all date range options
 
+#### **📺 YouTube Brand Lift Auditor (Pre-flight)**
+- `youtube_brand_lift_auditor` - Estimate brand lift metrics **before** serving a video ad
+
 ## 🚀 Quick Start
 
 ```bash
@@ -267,6 +270,154 @@ This MCP server covers the following DV360 API endpoints:
 - `queries.create()` - Generate reports
 - `firstAndThirdPartyAudiences.create()` - Create audiences
 
+---
+
+## 📺 YouTube Brand Lift Auditor
+
+The `youtube_brand_lift_auditor` tool runs a **pre-flight audit** of a YouTube video ad and returns estimated brand lift metrics before the campaign is served. It scores creative quality and targeting effectiveness, applies industry vertical benchmarks, flags risks, and provides recommendations.
+
+> **No extra API credentials required.** The auditor reuses the same DV360 credentials already configured for the server. It optionally fetches live creative and targeting data from the DV360 API when IDs are provided.
+
+### How it works
+
+The tool combines two scores into an overall readiness score (0–100):
+
+| Dimension | Weight | Signals used |
+|---|---|---|
+| Creative score | 40 % | Video duration, ad format, objective–format alignment |
+| Targeting score | 60 % | Audience layers (in-market, affinity, custom intent, keywords, …) |
+
+Predicted lift ranges (low / mid / high) are then calculated by applying the scores as multipliers against published industry benchmarks for 8 verticals: **CPG, AUTO, TECH, RETAIL, FINANCE, ENTERTAINMENT, HEALTHCARE, TRAVEL**.
+
+Supported ad formats: `SKIPPABLE_IN_STREAM`, `BUMPER`, `IN_FEED`, `OUTSTREAM`.  
+Non-skippable formats are intentionally excluded from the scoring model.
+
+### Usage
+
+#### Minimal call (manual creative attributes)
+
+```
+"Run a YouTube Brand Lift audit for advertiser 1076318578,
+ 30-second skippable in-stream video, AUTO vertical, AWARENESS objective"
+```
+
+This calls the tool with:
+```json
+{
+  "advertiser_id": "1076318578",
+  "video_duration_seconds": 30,
+  "video_format": "SKIPPABLE_IN_STREAM",
+  "industry_vertical": "AUTO",
+  "campaign_objective": "AWARENESS"
+}
+```
+
+#### Full call (API-backed, richer analysis)
+
+When you supply `creative_id`, `line_item_id`, and `campaign_id`, the auditor fetches live data from DV360 automatically:
+
+```
+"Audit brand lift for advertiser 1076318578, creative 99999,
+ line item 11111, campaign 52866149 — RETAIL vertical, CONSIDERATION objective,
+ frequency cap 4 per week"
+```
+
+```json
+{
+  "advertiser_id": "1076318578",
+  "creative_id": "99999",
+  "line_item_id": "11111",
+  "campaign_id": "52866149",
+  "industry_vertical": "RETAIL",
+  "campaign_objective": "CONSIDERATION",
+  "target_frequency": 4.0
+}
+```
+
+### Parameters
+
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| `advertiser_id` | string | **Yes** | DV360 advertiser ID |
+| `creative_id` | string | No | Fetches format and duration automatically from DV360 |
+| `line_item_id` | string | No | Fetches targeting configuration automatically from DV360 |
+| `campaign_id` | string | No | Adds historical performance context (last 30 days) |
+| `industry_vertical` | string | No | `CPG`, `AUTO`, `TECH`, `RETAIL`, `FINANCE`, `ENTERTAINMENT`, `HEALTHCARE`, `TRAVEL`, `DEFAULT` |
+| `campaign_objective` | string | No | `AWARENESS` (default), `CONSIDERATION`, `ACTION` |
+| `video_duration_seconds` | integer | No | Video length in seconds — used when `creative_id` is not provided |
+| `video_format` | string | No | Format override: `SKIPPABLE_IN_STREAM`, `BUMPER`, `IN_FEED`, `OUTSTREAM` |
+| `target_frequency` | number | No | Planned weekly frequency cap (e.g. `4.0`) |
+| `budget_usd` | number | No | Planned flight budget in USD (for context) |
+
+### Output
+
+The audit returns a structured report:
+
+```json
+{
+  "audit_summary": {
+    "overall_score": 81,
+    "lift_potential": "HIGH",
+    "recommendation": "READY_TO_FLIGHT",
+    "industry_vertical": "AUTO",
+    "campaign_objective": "AWARENESS"
+  },
+  "creative_assessment": {
+    "score": 93,
+    "format": "SKIPPABLE_IN_STREAM",
+    "duration_seconds": 30,
+    "duration_category": "STANDARD",
+    "objective_format_alignment": "GOOD",
+    "strengths": ["Duration (30s) is in the optimal range for brand lift", "..."],
+    "improvements": []
+  },
+  "targeting_assessment": {
+    "score": 74,
+    "detected_targeting_types": ["IN_MARKET_AUDIENCE", "DEMOGRAPHIC", "KEYWORD"],
+    "reach_estimate": "TARGETED",
+    "strengths": ["Intent-based audiences signal high purchase readiness", "..."],
+    "improvements": ["..."]
+  },
+  "predicted_brand_lift": {
+    "brand_awareness_lift_pct":      { "low": 4.1, "mid": 6.8, "high": 9.5 },
+    "ad_recall_lift_pct":            { "low": 9.8, "mid": 16.0, "high": 22.1 },
+    "brand_consideration_lift_pct":  { "low": 2.9, "mid": 4.7, "high": 6.6 },
+    "purchase_intent_lift_pct":      { "low": 1.4, "mid": 3.2, "high": 5.0 },
+    "confidence": "HIGH"
+  },
+  "industry_benchmarks": {
+    "vertical": "AUTO",
+    "awareness_lift_range": "3.0%-7.0%",
+    "ad_recall_lift_range": "8.0%-18.0%"
+  },
+  "risk_flags": [],
+  "recommendations": [
+    "Set frequency capping at 3-5 impressions per week to maximise lift",
+    "Enable Brand Lift measurement in Google Ads / DV360 to validate actual lift post-flight"
+  ]
+}
+```
+
+**`recommendation` values:**
+
+| Value | Meaning |
+|---|---|
+| `READY_TO_FLIGHT` | Overall score ≥ 70 and no HIGH-severity flags |
+| `PROCEED_WITH_CAUTION` | Score 55–69, no blocking issues |
+| `OPTIMIZATION_RECOMMENDED` | Score < 55, improvements advised before flight |
+| `NOT_READY_ACTION_REQUIRED` | One or more HIGH-severity flags detected |
+
+### Natural language prompts to try
+
+```
+"Audit brand lift for advertiser 1076318578, 15-second bumper, CPG vertical"
+"Is this video ad ready to flight? Advertiser 1076318578, creative 99999, CONSIDERATION objective"
+"What brand lift can I expect for a 30s skippable ad in the TECH vertical with frequency 5?"
+"Check targeting effectiveness for line item 11111 before we launch"
+```
+
+---
+
 ## Development
 
 ### Project Structure
@@ -275,11 +426,13 @@ dv360-mcp-server-claude/
 ├── src/
 │   └── dv360_mcp_server/
 │       ├── __init__.py
-│       ├── server.py          # Main MCP server implementation
-│       ├── dv360_client.py    # DV360 API client wrapper
-│       └── config.py          # Configuration management
-├── requirements.txt           # Python dependencies
-└── README.md                 # This file
+│       ├── server.py                # Main MCP server — tool registration & routing
+│       ├── dv360_client.py          # DV360 API client wrapper
+│       ├── bid_manager_client.py    # Bid Manager API v2 — real performance metrics
+│       ├── youtube_brand_lift.py    # YouTube Brand Lift Auditor (pre-flight)
+│       └── config.py                # Configuration management
+├── requirements.txt                 # Python dependencies
+└── README.md                        # This file
 ```
 
 ### Contributing
