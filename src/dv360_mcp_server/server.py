@@ -544,6 +544,66 @@ class DV360MCPServer:
                         "type": "object",
                         "properties": {}
                     }
+                ),
+                Tool(
+                    name="youtube_brand_lift_auditor",
+                    description=(
+                        "Pre-flight YouTube Brand Lift Auditor: estimates brand lift metrics "
+                        "(awareness, ad recall, consideration, purchase intent) for a video ad "
+                        "BEFORE it is served. Scores creative quality and targeting effectiveness, "
+                        "applies industry benchmarks, surfaces risk flags, and provides actionable "
+                        "recommendations to maximise lift. Provide creative_id and/or line_item_id "
+                        "for richer API-backed analysis, or supply video_duration_seconds and "
+                        "video_format manually."
+                    ),
+                    inputSchema={
+                        "type": "object",
+                        "properties": {
+                            "advertiser_id": {
+                                "type": "string",
+                                "description": "DV360 advertiser ID (required)"
+                            },
+                            "creative_id": {
+                                "type": "string",
+                                "description": "Optional: DV360 creative ID to fetch format and duration automatically"
+                            },
+                            "line_item_id": {
+                                "type": "string",
+                                "description": "Optional: DV360 line item ID to fetch targeting configuration automatically"
+                            },
+                            "campaign_id": {
+                                "type": "string",
+                                "description": "Optional: DV360 campaign ID to include historical performance context"
+                            },
+                            "industry_vertical": {
+                                "type": "string",
+                                "description": "Industry vertical for benchmark selection: CPG, AUTO, TECH, RETAIL, FINANCE, ENTERTAINMENT, HEALTHCARE, TRAVEL, DEFAULT",
+                                "default": "DEFAULT"
+                            },
+                            "campaign_objective": {
+                                "type": "string",
+                                "description": "Campaign objective: AWARENESS, CONSIDERATION, or ACTION",
+                                "default": "AWARENESS"
+                            },
+                            "video_duration_seconds": {
+                                "type": "integer",
+                                "description": "Video duration in seconds (used when creative_id is not provided)"
+                            },
+                            "video_format": {
+                                "type": "string",
+                                "description": "Ad format override: SKIPPABLE_IN_STREAM, NON_SKIPPABLE_IN_STREAM, BUMPER, IN_FEED, OUTSTREAM"
+                            },
+                            "target_frequency": {
+                                "type": "number",
+                                "description": "Optional: planned weekly frequency cap (e.g. 3.0). Used to model frequency impact on lift."
+                            },
+                            "budget_usd": {
+                                "type": "number",
+                                "description": "Optional: planned flight budget in USD for context"
+                            }
+                        },
+                        "required": ["advertiser_id"]
+                    }
                 )
             ]
         
@@ -680,6 +740,19 @@ class DV360MCPServer:
                     result = await self.dv360_client.get_available_performance_metrics()
                 elif name == "get_available_date_ranges":
                     result = await self.dv360_client.get_available_date_ranges()
+                elif name == "youtube_brand_lift_auditor":
+                    result = await self.dv360_client.audit_youtube_brand_lift(
+                        advertiser_id=arguments["advertiser_id"],
+                        creative_id=arguments.get("creative_id"),
+                        line_item_id=arguments.get("line_item_id"),
+                        campaign_id=arguments.get("campaign_id"),
+                        industry_vertical=arguments.get("industry_vertical", "DEFAULT"),
+                        campaign_objective=arguments.get("campaign_objective", "AWARENESS"),
+                        video_duration_seconds=arguments.get("video_duration_seconds"),
+                        video_format=arguments.get("video_format"),
+                        target_frequency=arguments.get("target_frequency"),
+                        budget_usd=arguments.get("budget_usd"),
+                    )
                 else:
                     raise ValueError(f"Unknown tool: {name}")
                 
