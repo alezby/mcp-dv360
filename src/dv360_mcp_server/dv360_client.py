@@ -14,6 +14,7 @@ from googleapiclient.errors import HttpError
 
 from .config import Config
 from .bid_manager_client import BidManagerClient
+from .youtube_brand_lift import YouTubeBrandLiftAuditor
 
 logger = logging.getLogger(__name__)
 
@@ -589,3 +590,33 @@ class DV360Client:
     async def get_available_date_ranges(self) -> List[str]:
         """Get list of all available date ranges for reports."""
         return self.bid_manager.get_available_date_ranges()
+
+    # ===== YOUTUBE BRAND LIFT AUDITOR =====
+
+    async def audit_youtube_brand_lift(
+        self,
+        advertiser_id: str,
+        creative_id: Optional[str] = None,
+        line_item_id: Optional[str] = None,
+        campaign_id: Optional[str] = None,
+        industry_vertical: str = "DEFAULT",
+        campaign_objective: str = "AWARENESS",
+        video_duration_seconds: Optional[int] = None,
+        video_format: Optional[str] = None,
+        target_frequency: Optional[float] = None,
+        budget_usd: Optional[float] = None,
+    ) -> Dict[str, Any]:
+        """Run a pre-flight YouTube Brand Lift audit before an ad flight."""
+        auditor = YouTubeBrandLiftAuditor(dv360_client=self)
+        return await auditor.audit(
+            advertiser_id=advertiser_id,
+            creative_id=creative_id,
+            line_item_id=line_item_id,
+            campaign_id=campaign_id,
+            industry_vertical=industry_vertical,
+            campaign_objective=campaign_objective,
+            video_duration_seconds=video_duration_seconds,
+            video_format=video_format,
+            target_frequency=target_frequency,
+            budget_usd=budget_usd,
+        )
