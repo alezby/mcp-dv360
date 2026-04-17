@@ -81,12 +81,6 @@ FORMAT_SCORING: Dict[str, Dict[str, Any]] = {
         "consideration_multiplier": 1.1,
         "recall_multiplier": 0.95,
     },
-    "NON_SKIPPABLE_IN_STREAM": {
-        "score": 90,
-        "strength": "Guaranteed 100% completion, strong brand message delivery",
-        "consideration_multiplier": 1.2,
-        "recall_multiplier": 1.25,
-    },
     "BUMPER": {
         "score": 85,
         "strength": "High-frequency reach, strong ad recall at scale",
@@ -269,7 +263,7 @@ class YouTubeBrandLiftAuditor:
         if "BUMPER" in u:
             return "BUMPER"
         if "NON_SKIPPABLE" in u:
-            return "NON_SKIPPABLE_IN_STREAM"
+            return "UNKNOWN"
         if "SKIPPABLE" in u or "TRUEVIEW" in u:
             return "SKIPPABLE_IN_STREAM"
         if "IN_FEED" in u or "DISCOVERY" in u:
@@ -308,7 +302,7 @@ class YouTubeBrandLiftAuditor:
         obj = objective.upper()
         alignment_score = 0
         if obj == "AWARENESS":
-            if format_key in ("SKIPPABLE_IN_STREAM", "BUMPER", "NON_SKIPPABLE_IN_STREAM"):
+            if format_key in ("SKIPPABLE_IN_STREAM", "BUMPER"):
                 alignment_score = 5
                 strengths.append("Format aligns well with awareness objective")
         elif obj == "CONSIDERATION":
@@ -525,16 +519,6 @@ class YouTubeBrandLiftAuditor:
                 "message": (
                     "Bumper ad format (≤6s) is sub-optimal for consideration or action objectives; "
                     "insufficient time for meaningful message delivery."
-                ),
-            })
-
-        if format_key == "NON_SKIPPABLE_IN_STREAM" and duration_s and duration_s > 30:
-            flags.append({
-                "severity": "WARNING",
-                "category": "CREATIVE",
-                "message": (
-                    f"Non-skippable ads over 30s ({duration_s}s) risk negative user experience. "
-                    "Consider a 15-20s cut."
                 ),
             })
 
