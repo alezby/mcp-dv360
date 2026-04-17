@@ -14,8 +14,10 @@ from google_auth_oauthlib.flow import Flow
 from google.oauth2.credentials import Credentials
 from pydantic import BaseModel
 
-# Allow HTTP for local development (remove in production)
-os.environ.setdefault("OAUTHLIB_INSECURE_TRANSPORT", "1")
+# Allow HTTP only for local development; Cloud Run serves HTTPS so this stays unset there
+_redirect = os.environ.get("REDIRECT_URI", "http://localhost:8000/auth/callback")
+if _redirect.startswith("http://"):
+    os.environ.setdefault("OAUTHLIB_INSECURE_TRANSPORT", "1")
 
 # Add project root so we can import the auditor
 import sys

@@ -1,0 +1,14 @@
+.git
+.env
+*.pyc
+__pycache__
+*.egg-info
+.pytest_cache
+test_*.py
+*.md
+INSTALL.md
+SETUP_COMPLETE.md
+CONTRIBUTING.md
+GITHUB_SETUP.md
+RELEASE_SUMMARY.md
+setup_credentials.md
