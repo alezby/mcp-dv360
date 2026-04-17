@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>YouTube Brand Lift Auditor</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+
+<!-- ── Header ────────────────────────────────────────────────────────────── -->
+<header>
+  <div class="header-brand">
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <rect width="28" height="28" rx="6" fill="#FF0000"/>
+      <polygon points="11,8 22,14 11,20" fill="white"/>
+    </svg>
+    <h1>Brand Lift Auditor</h1>
+    <span>Pre-flight</span>
+  </div>
+  <div id="header-user" class="user-pill hidden">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5f6368" stroke-width="2">
+      <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+    </svg>
+    <strong id="user-email"></strong>
+    <a href="/auth/logout" class="btn btn-danger btn-sm">Sign out</a>
+  </div>
+</header>
+
+<!-- ── Error banner (global) ──────────────────────────────────────────────── -->
+<div class="container" style="padding-bottom:0">
+  <div id="error-banner" class="error-banner"></div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<!-- Auth screen                                                              -->
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<section id="auth-screen">
+  <div class="auth-card">
+    <div class="yt-icon">
+      <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
+        <rect width="56" height="56" rx="12" fill="#FF0000"/>
+        <polygon points="22,16 42,28 22,40" fill="white"/>
+      </svg>
+    </div>
+    <h2>YouTube Brand Lift Auditor</h2>
+    <p>Connect your Google account to analyse YouTube video ads and estimate brand lift metrics before your campaign flights.</p>
+
+    <div class="scopes">
+      <p>This app will request access to:</p>
+      <ul>
+        <li>Display &amp; Video 360 (read your advertisers, creatives, line items)</li>
+        <li>Bid Manager (historical performance context)</li>
+        <li>Your Google account email (identification only)</li>
+      </ul>
+    </div>
+
+    <a href="/auth/login" class="btn btn-google" style="justify-content:center;width:100%">
+      <svg width="18" height="18" viewBox="0 0 18 18">
+        <path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 002.38-5.88c0-.57-.05-.66-.15-1.18z"/>
+        <path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2a4.8 4.8 0 01-7.18-2.54H1.83v2.07A8 8 0 008.98 17z"/>
+        <path fill="#FBBC05" d="M4.5 10.52a4.8 4.8 0 010-3.04V5.41H1.83a8 8 0 000 7.18l2.67-2.07z"/>
+        <path fill="#EA4335" d="M8.98 4.18c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 001.83 5.4L4.5 7.49a4.77 4.77 0 014.48-3.3z"/>
+      </svg>
+      Sign in with Google
+    </a>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<!-- Audit form screen                                                        -->
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<section id="audit-screen">
+  <div class="container">
+
+    <!-- Step indicator -->
+    <div class="steps">
+      <div class="step active">
+        <div class="step-num">1</div>
+        <div class="step-label">Advertiser</div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-label">Creative &amp; Line Item</div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-label">Parameters</div>
+      </div>
+    </div>
+
+    <!-- ── Step 1: Advertiser ─────────────────────────────────────────── -->
+    <div class="step-panel card">
+      <h3>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1a73e8" stroke-width="2">
+          <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/>
+        </svg>
+        Select Advertiser
+      </h3>
+
+      <div class="form-row single">
+        <div class="form-group">
+          <label>DV360 Advertiser</label>
+          <select id="sel-advertiser">
+            <option value="">Loading advertisers…</option>
+          </select>
+          <span class="hint">Fetched from your DV360 account</span>
+        </div>
+      </div>
+
+      <div id="manual-advertiser-row" class="form-row single hidden">
+        <div class="form-group">
+          <label>Advertiser ID (manual)</label>
+          <input type="text" id="input-advertiser-manual" placeholder="e.g. 1076318578" />
+          <span class="hint">Enter manually if the dropdown could not load</span>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-primary" onclick="goToStep2()">Continue →</button>
+      </div>
+    </div>
+
+    <!-- ── Step 2: Creative & Line Item ───────────────────────────────── -->
+    <div class="step-panel card hidden">
+      <h3>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1a73e8" stroke-width="2">
+          <rect x="2" y="2" width="20" height="20" rx="2"/>
+          <polygon points="10,8 16,12 10,16"/>
+        </svg>
+        Creative &amp; Line Item
+        <span style="font-size:12px;color:#9aa0a6;font-weight:400">(all optional — for richer API-backed analysis)</span>
+      </h3>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Campaign</label>
+          <select id="sel-campaign"><option value="">(optional)</option></select>
+          <span class="hint">Used for historical performance context</span>
+        </div>
+        <div class="form-group">
+          <label>Line Item</label>
+          <select id="sel-line-item"><option value="">(optional)</option></select>
+          <span class="hint">Pulls live targeting configuration</span>
+        </div>
+      </div>
+
+      <div class="form-row single">
+        <div class="form-group">
+          <label>Video Creative</label>
+          <select id="sel-creative"><option value="">(optional)</option></select>
+          <span class="hint">Pulls format and duration automatically</span>
+        </div>
+      </div>
+
+      <div id="manual-creative-row" class="form-row">
+        <div class="form-group">
+          <label>Video Duration (seconds)</label>
+          <input type="number" id="input-duration-step2" placeholder="e.g. 30" min="1" max="600" />
+          <span class="hint">Enter manually if no creative selected</span>
+        </div>
+        <div class="form-group">
+          <label>Ad Format</label>
+          <select id="sel-format-step2">
+            <option value="">(not specified)</option>
+            <option>SKIPPABLE_IN_STREAM</option>
+            <option>BUMPER</option>
+            <option>IN_FEED</option>
+            <option>OUTSTREAM</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-secondary" onclick="backToStep1()">← Back</button>
+        <button class="btn btn-primary" onclick="goToStep3()">Continue →</button>
+      </div>
+    </div>
+
+    <!-- ── Step 3: Parameters ─────────────────────────────────────────── -->
+    <div class="step-panel card hidden">
+      <h3>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1a73e8" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M12 2v2M12 20v2M2 12h2M20 12h2M19.07 19.07l-1.41-1.41M4.93 19.07l1.41-1.41"/>
+        </svg>
+        Audit Parameters
+      </h3>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Industry Vertical</label>
+          <select id="sel-vertical"></select>
+          <span class="hint">Applies the right benchmark set</span>
+        </div>
+        <div class="form-group">
+          <label>Campaign Objective</label>
+          <select id="sel-objective"></select>
+        </div>
+      </div>
+
+      <div class="divider">Override / fallback creative attributes</div>
+
+      <div class="form-row triple">
+        <div class="form-group">
+          <label>Duration (seconds)</label>
+          <input type="number" id="input-duration" placeholder="e.g. 30" min="1" max="600" />
+          <span class="hint">Leave blank if creative_id set</span>
+        </div>
+        <div class="form-group">
+          <label>Ad Format</label>
+          <select id="sel-format"></select>
+        </div>
+        <div class="form-group">
+          <label>Weekly Frequency Cap</label>
+          <input type="number" id="input-frequency" placeholder="e.g. 4" min="0.5" max="20" step="0.5" />
+          <span class="hint">Impacts ad fatigue modelling</span>
+        </div>
+      </div>
+
+      <div class="form-row single">
+        <div class="form-group">
+          <label>Flight Budget (USD) — optional</label>
+          <input type="number" id="input-budget" placeholder="e.g. 50000" min="0" />
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-secondary" onclick="backToStep2()">← Back</button>
+        <button class="btn btn-primary" onclick="runAudit()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polygon points="5,3 19,12 5,21"/>
+          </svg>
+          Run Brand Lift Audit
+        </button>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<!-- Loading screen                                                           -->
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<section id="loading-screen">
+  <div class="container" style="display:flex;align-items:center;justify-content:center;min-height:60vh">
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Running pre-flight brand lift audit…</p>
+      <p style="margin-top:6px;font-size:12px;color:#9aa0a6">Fetching DV360 data and scoring your campaign</p>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<!-- Results screen                                                           -->
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<section id="results-screen">
+  <div class="container">
+
+    <!-- Header summary -->
+    <div class="card">
+      <div class="results-header">
+        <div class="gauge-wrap">
+          <div id="gauge-svg"></div>
+        </div>
+        <div class="gauge-meta">
+          <div class="score-label">Overall Score</div>
+          <div id="lift-potential" class="lift-potential"></div>
+          <div id="rec-badge" class="recommendation-badge"></div>
+          <div class="context">
+            <span>📊 Vertical: <strong id="ctx-vertical"></strong></span>
+            <span>🎯 Objective: <strong id="ctx-objective"></strong></span>
+          </div>
+          <div class="score-chips" style="margin-top:12px">
+            <div class="score-chip" id="creative-score-chip"></div>
+            <div class="score-chip" id="targeting-score-chip"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Predicted lift -->
+    <div class="card">
+      <h3>
+        📈 Predicted Brand Lift
+        <span id="lift-confidence" class="confidence"></span>
+      </h3>
+      <div class="lift-grid">
+        <div class="lift-card" id="lift-awareness"></div>
+        <div class="lift-card" id="lift-recall"></div>
+        <div class="lift-card" id="lift-consideration"></div>
+        <div class="lift-card" id="lift-intent"></div>
+      </div>
+      <div style="font-size:11px;color:#9aa0a6">
+        Industry benchmarks for this vertical —
+        Awareness: <strong id="bench-awareness"></strong> ·
+        Ad Recall: <strong id="bench-recall"></strong> ·
+        Consideration: <strong id="bench-consideration"></strong>
+      </div>
+    </div>
+
+    <!-- Assessment cards -->
+    <div class="assessment-grid">
+      <div class="card assessment-card" id="creative-assessment"></div>
+      <div class="card assessment-card" id="targeting-assessment"></div>
+    </div>
+
+    <!-- Risk flags -->
+    <div id="flags-card" class="card hidden">
+      <h3>⚠️ Risk Flags</h3>
+      <div id="flags-wrap" class="flag-list"></div>
+    </div>
+
+    <!-- Recommendations -->
+    <div class="card">
+      <h3>💡 Recommendations</h3>
+      <ol id="rec-list" class="rec-list"></ol>
+    </div>
+
+    <!-- Actions -->
+    <div style="display:flex;gap:12px;justify-content:flex-end;padding-bottom:40px">
+      <button class="btn btn-secondary" onclick="newAudit()">← New Audit</button>
+      <button class="btn btn-primary" onclick="window.print()">Print / Save PDF</button>
+    </div>
+
+  </div>
+</section>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

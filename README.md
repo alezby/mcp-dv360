@@ -431,9 +431,80 @@ dv360-mcp-server-claude/
 │       ├── bid_manager_client.py    # Bid Manager API v2 — real performance metrics
 │       ├── youtube_brand_lift.py    # YouTube Brand Lift Auditor (pre-flight)
 │       └── config.py                # Configuration management
-├── requirements.txt                 # Python dependencies
+├── web_app/
+│   ├── main.py                      # FastAPI web application
+│   ├── dv360_service.py             # DV360 API service (OAuth-backed)
+│   └── static/
+│       ├── index.html               # Single-page app UI
+│       ├── style.css                # Styles
+│       └── app.js                   # Frontend logic
+├── run_app.py                       # Web app startup script
+├── requirements.txt                 # MCP server dependencies
+├── requirements_web.txt             # Web app dependencies
 └── README.md                        # This file
 ```
+
+---
+
+## 🌐 Web App — Brand Lift Auditor UI
+
+A standalone FastAPI web application that lets any user sign in with their Google account and run a Brand Lift audit directly in the browser — no MCP setup required.
+
+### Prerequisites
+
+1. A Google Cloud project with these APIs enabled:
+   - Display & Video 360 API
+   - DoubleClick Bid Manager API
+   - Google OAuth2 API
+2. OAuth 2.0 credentials (Web Application type) with `http://localhost:8000/auth/callback` as an authorised redirect URI
+3. Python dependencies installed:
+
+```bash
+pip install -r requirements.txt -r requirements_web.txt
+```
+
+### Running the app
+
+```bash
+export GOOGLE_CLIENT_ID="your-oauth-client-id"
+export GOOGLE_CLIENT_SECRET="your-oauth-client-secret"
+# Optional — defaults shown:
+# export REDIRECT_URI="http://localhost:8000/auth/callback"
+# export SECRET_KEY="random-secret-for-sessions"
+
+python run_app.py
+```
+
+Then open `http://localhost:8000` in your browser.
+
+### User flow
+
+1. **Sign in** — Click "Sign in with Google". Grant access to DV360 and Bid Manager.
+2. **Select Advertiser** — Dropdown auto-populated from your DV360 account.
+3. **Select Creative & Line Item** (optional) — Video creatives and line items fetched automatically per advertiser. If left blank, enter duration and format manually.
+4. **Configure Parameters** — Choose industry vertical, campaign objective, frequency cap, and budget.
+5. **Run Audit** — Results appear instantly with:
+   - Overall score gauge (0–100)
+   - Flight readiness decision (READY TO FLIGHT, PROCEED WITH CAUTION, etc.)
+   - Predicted lift ranges for awareness, ad recall, consideration, purchase intent
+   - Creative and targeting assessment cards with strengths and improvement points
+   - Colour-coded risk flags (HIGH / WARNING)
+   - Prioritised recommendations
+   - Print / Save PDF button
+
+### API endpoints
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/auth/login` | Redirect to Google OAuth |
+| `GET` | `/auth/callback` | OAuth callback — stores tokens |
+| `GET` | `/auth/logout` | Clear session |
+| `GET` | `/auth/status` | Check auth + get user email |
+| `GET` | `/api/advertisers` | List DV360 advertisers |
+| `GET` | `/api/campaigns/{advertiser_id}` | List campaigns |
+| `GET` | `/api/creatives/{advertiser_id}` | List video creatives |
+| `GET` | `/api/line-items/{advertiser_id}` | List line items (optional `?campaign_id=`) |
+| `POST` | `/api/audit` | Run Brand Lift audit |
 
 ### Contributing
 
